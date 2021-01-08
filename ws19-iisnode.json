@@ -1,0 +1,58 @@
+{
+    "variables": {
+        "AWS_MAX_ATTEMPTS": "120",
+        "AWS_POLL_DELAY_SECONDS": "60"
+    },
+
+    "builders": [{
+        "type": "amazon-ebs",
+        "region": "us-east-1",
+        "source_ami": "ami-0229f7666f517b31e",
+        "instance_type": "t3.medium",
+        "ami_name": "pkr-ws19-iisnode-{{isotime \"2006-01-02\"}}",
+        "force_deregister": true,
+        "force_delete_snapshot": true,
+        "subnet_id": "subnet-0ac2181ed56b16023",
+        "user_data_file":"./ec2-userdata.ps1",
+        "communicator": "winrm",
+        "pause_before_connecting": "1m",
+        "winrm_username": "Administrator",
+        "winrm_use_ssl": true,
+        "winrm_insecure": true,
+        "no_ephemeral": true,
+        "launch_block_device_mappings": [
+            {
+               "device_name": "/dev/sda1",
+               "volume_size": 30,
+               "encrypted": true,
+               "delete_on_termination": true
+            },
+            {
+               "device_name": "xvdb",
+               "volume_size": 30,
+               "encrypted": true,
+               "delete_on_termination": true
+            }
+          ],
+          "tags":{
+              "Name": "pkr-ws19-iisnode-{{isotime \"2006-01-02\"}}"
+}
+    }],
+    "provisioners": [
+        {
+            "type": "powershell",
+            "script": "init.ps1"
+        },
+        {
+            "type": "powershell",
+            "script": "end.ps1"
+        },
+        {
+            "type": "powershell",
+            "inline": [
+              "C:/ProgramData/Amazon/EC2-Windows/Launch/Scripts/InitializeInstance.ps1 -Schedule",
+              "C:/ProgramData/Amazon/EC2-Windows/Launch/Scripts/SysprepInstance.ps1 -NoShutdown"
+            ]
+        }
+    ]
+}
